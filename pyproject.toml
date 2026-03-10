@@ -1,0 +1,39 @@
+[project]
+name = "agent-common"
+version = "0.1.0"
+description = "Reusable support agent template"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "chainlit",
+    "openai>1.68",
+    "langgraph==0.2.14",
+    "pydantic-settings==2.4.0",
+    "langchain>=0.2.15,<0.3.0",
+    "streamlit>=1.44.0,<2.0.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.11.4",
+]
+
+[tool.ruff]
+select = [
+    "F",
+    "B",
+    "I",
+    "E",
+    "W",
+]
+ignore = []
+fixable = ["ALL"]
+exclude = [
+    ".ruff_cache",
+]
+line-length = 119
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
