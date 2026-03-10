@@ -8,8 +8,14 @@ build.knowledge:
 
 .PHONY: run.ui
 run.ui:
-	@uv run chainlit run chainlit_app.py -w
+	@trap 'kill 0' EXIT INT TERM; \
+	uv run streamlit run admin_app.py --server.port 8501 >/tmp/agent_common_admin.log 2>&1 & \
+	uv run chainlit run chainlit_app.py -w
 
 .PHONY: run.ui.streamlit
 run.ui.streamlit:
 	@uv run streamlit run streamlit_app.py
+
+.PHONY: run.admin
+run.admin:
+	@uv run streamlit run admin_app.py --server.port 8501

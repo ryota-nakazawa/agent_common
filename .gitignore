@@ -1,5 +1,6 @@
 .env
 .venv
-.chainlit/
+.chainlit/*
+!.chainlit/config.toml
 chainlit.md
 __pycache__/
