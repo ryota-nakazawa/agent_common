@@ -41,12 +41,17 @@ def load_dashboard_data() -> pd.DataFrame:
         "needs_follow_up",
         "handoff_needed",
         "handoff_target",
+        "handoff_reason",
+        "handoff_payload",
         "resolution_mode",
         "confidence",
+        "reasoning_summary",
         "resolved_parts",
         "unresolved_parts",
         "blocking_items",
+        "optional_context",
         "immediate_guidance",
+        "relevant_articles",
     ]
     if not records:
         return pd.DataFrame(columns=base_columns)
@@ -54,7 +59,14 @@ def load_dashboard_data() -> pd.DataFrame:
     frame = pd.DataFrame(records)
     for column in base_columns:
         if column not in frame.columns:
-            if column in {"resolved_parts", "unresolved_parts", "blocking_items", "immediate_guidance"}:
+            if column in {
+                "resolved_parts",
+                "unresolved_parts",
+                "blocking_items",
+                "optional_context",
+                "immediate_guidance",
+                "relevant_articles",
+            }:
                 frame[column] = [[] for _ in range(len(frame))]
             else:
                 frame[column] = ""
@@ -177,6 +189,30 @@ def inject_css() -> None:
             border: 1px solid rgba(15, 23, 42, 0.08);
             border-radius: 20px;
             padding: 1rem;
+        }
+        .article-card {
+            background: rgba(248,250,252,0.95);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 16px;
+            padding: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        .article-source {
+            color: #111827;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .article-tool {
+            color: #0f766e;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.45rem;
+        }
+        .article-excerpt {
+            color: #4b5563;
+            font-size: 0.92rem;
+            white-space: pre-wrap;
         }
         .detail-kv {
             color: #4b5563;
@@ -443,8 +479,45 @@ def render_detail_panel(frame: pd.DataFrame) -> None:
         else:
             st.write("- なし")
 
+        st.markdown("**Optional Context**")
+        optional_context = selected_row["optional_context"] if isinstance(selected_row["optional_context"], list) else []
+        if optional_context:
+            for item in optional_context:
+                st.write(f"- {item}")
+        else:
+            st.write("- なし")
+
     if selected_row.get("handoff_needed"):
         st.warning(f"Human Handoff: {selected_row.get('handoff_target') or selected_row.get('assigned_team')}")
+        st.markdown("**Handoff Reason**")
+        st.write(selected_row.get("handoff_reason") or "-")
+        st.markdown("**Handoff Payload**")
+        st.code(selected_row.get("handoff_payload") or "-", language="text")
+
+    st.markdown("**Reasoning Summary**")
+    st.write(selected_row.get("reasoning_summary") or "-")
+
+    st.markdown("**Relevant Articles**")
+    relevant_articles = (
+        selected_row["relevant_articles"] if isinstance(selected_row["relevant_articles"], list) else []
+    )
+    if relevant_articles:
+        for article in relevant_articles:
+            source = article.get("source", "-")
+            tool_name = article.get("tool_name", "-")
+            excerpt = article.get("excerpt", "-")
+            st.markdown(
+                f"""
+                <div class="article-card">
+                    <div class="article-tool">{tool_name}</div>
+                    <div class="article-source">{source}</div>
+                    <div class="article-excerpt">{excerpt}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        st.write("- なし")
 
     st.markdown("</div>", unsafe_allow_html=True)
 

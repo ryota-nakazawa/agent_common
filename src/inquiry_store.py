@@ -35,6 +35,28 @@ def _build_routing_bucket(result: AgentResult) -> str:
     return result.processing_path
 
 
+def _build_relevant_articles(result: AgentResult) -> list[dict[str, str]]:
+    articles: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    for subtask in result.subtasks:
+        for attempt in subtask.tool_results:
+            for tool_result in attempt:
+                for item in tool_result.results:
+                    key = (tool_result.tool_name, item.file_name, item.content)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    articles.append(
+                        {
+                            "tool_name": tool_result.tool_name,
+                            "source": item.file_name,
+                            "excerpt": item.content[:400],
+                        }
+                    )
+    return articles[:8]
+
+
 def append_inquiry_record(result: AgentResult, store_path: Path | None = None) -> None:
     path = store_path or get_default_store_path()
     records = _load_records(path)
@@ -53,13 +75,18 @@ def append_inquiry_record(result: AgentResult, store_path: Path | None = None) -
             "needs_follow_up": triage.needs_follow_up,
             "handoff_needed": triage.handoff_needed,
             "handoff_target": triage.handoff_target,
+            "handoff_reason": triage.handoff_reason,
+            "handoff_payload": triage.handoff_payload,
             "resolved_parts": triage.resolved_parts,
             "unresolved_parts": triage.unresolved_parts,
             "blocking_items": triage.blocking_items,
+            "optional_context": triage.optional_context,
             "immediate_guidance": triage.immediate_guidance,
             "draft_reply": triage.draft_reply,
             "next_user_action": triage.next_user_action,
             "confidence": triage.confidence,
+            "reasoning_summary": triage.reasoning_summary,
+            "relevant_articles": _build_relevant_articles(result),
         }
     )
     _write_records(path, records)
